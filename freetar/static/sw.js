@@ -54,12 +54,17 @@ self.addEventListener("fetch", event => {
 
 async function networkFirst(request) {
     const cache = await caches.open(PAGE_CACHE);
-    try {
-        const response = await withTimeout(fetch(request), PAGE_TIMEOUT_MS);
+    const cached = await cache.match(request);
+    const network = fetch(request).then(response => {
         if (response.ok) cache.put(request, response.clone());
         return response;
+    });
+    // Only give up on a slow network when there is a saved copy to show instead;
+    // new songs can take a while because the server fetches them from Ultimate Guitar.
+    try {
+        return await (cached ? withTimeout(network, PAGE_TIMEOUT_MS) : network);
     } catch {
-        return await cache.match(request) || offlinePage();
+        return cached || offlinePage();
     }
 }
 
@@ -90,10 +95,13 @@ function offlinePage() {
         `<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Freetar - offline</title>
         <body style="font-family: system-ui; padding: 2rem; background: #212529; color: #f8f9fa">
-        <h1>You're offline</h1>
+        <h1>Can't reach Freetar</h1>
+        <p>This device can't connect to the Freetar server right now. Make sure you're on the
+        same Wi-Fi as the computer running it.</p>
         <p>This page hasn't been opened before, so it isn't saved on this device.
         Songs you've already opened still work.</p>
-        <p><a href="/" style="color: #6ea8fe">Go to the home page</a></p>`,
-        { headers: { "Content-Type": "text/html; charset=utf-8" } },
+        <p><button onclick="location.reload()" style="font-size: 1rem; padding: .5rem 1rem">Try again</button>
+        &nbsp; <a href="/" style="color: #6ea8fe">Home page</a></p>`,
+        { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } },
     );
 }

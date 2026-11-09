@@ -117,7 +117,8 @@ class SongDetail:
 def fetch_store(path: str, params: dict = None, tabs_host: bool = False, attempts: int = 3) -> dict:
     """Download a UG page and return its parsed `js-store` JSON.
 
-    The proxy intermittently serves pages without `store.page.data`, so retry those.
+    The proxy intermittently serves pages without `store.page.data` or fails with a
+    connection error or 5xx, so retry those. 4xx (e.g. a song that doesn't exist) fails at once.
     """
     if LOCAL_MODE:
         host = "https://tabs.ultimate-guitar.com" if tabs_host else "https://www.ultimate-guitar.com"
@@ -127,10 +128,24 @@ def fetch_store(path: str, params: dict = None, tabs_host: bool = False, attempt
         headers = None
 
     data = None
-    for _ in range(attempts):
-        resp = requests.get(host + path, params=params, headers=headers, timeout=20)
-        resp.raise_for_status()
+    for attempt in range(attempts):
+        last_attempt = attempt == attempts - 1
+        try:
+            resp = requests.get(host + path, params=params, headers=headers, timeout=15)
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError:
+            if resp.status_code < 500 or last_attempt:
+                raise
+            continue
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            if last_attempt:
+                raise
+            continue
         store = BeautifulSoup(resp.text, 'html.parser').find("div", {"class": "js-store"})
+        if store is None:
+            if last_attempt:
+                raise FreetarError("Ultimate Guitar returned an unexpected page, please try again.")
+            continue
         data = json.loads(store.attrs['data-content'])
         if "data" in data["store"]["page"]:
             return data

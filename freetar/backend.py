@@ -140,7 +140,7 @@ def internal_error(error):
     search_term = request.args.get("search_term")
     return render_template('error.html',
                            search_term=search_term,
-                           error=error)
+                           error=error), getattr(error, "code", 502)
 
 
 def main():

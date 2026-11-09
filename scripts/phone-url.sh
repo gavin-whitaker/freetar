@@ -30,8 +30,8 @@ if ! docker info >/dev/null 2>&1; then
     echo "Docker isn't running. Open Docker Desktop, wait for it to start, then run this again." >&2
     exit 1
 fi
-docker compose up -d >/dev/null 2>&1 || docker compose up -d
-docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
+docker compose up -d </dev/null >/dev/null 2>&1 || docker compose up -d </dev/null
+docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile </dev/null >/dev/null 2>&1 || true
 
 for _ in {1..20}; do
     curl -sk -o /dev/null --max-time 2 "https://localhost:$port/" && break

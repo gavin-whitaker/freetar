@@ -7,6 +7,9 @@
 #   repo-url     defaults to https://github.com/gavin-whitaker/freetar.git
 # Optional environment variables: FREETAR_PORT (default 8080), FREETAR_HTTPS_PORT (default 8443)
 
+# Everything lives in main() so the whole script is read before it runs; when piped in
+# with `curl ... | zsh`, commands that read stdin would otherwise eat the rest of the script.
+main() {
 emulate -L zsh
 setopt err_exit pipe_fail no_unset
 
@@ -114,8 +117,8 @@ set_env FREETAR_HOSTNAME "$host_name"
 # --- Start -----------------------------------------------------------------
 
 info "Building and starting Freetar (the first run takes a few minutes)..."
-$compose up -d --build
-$compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile >/dev/null 2>&1 || true
+$compose up -d --build </dev/null
+$compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile </dev/null >/dev/null 2>&1 || true
 
 info "Waiting for Freetar to answer..."
 ready=false
@@ -149,3 +152,6 @@ if [[ $OS == Darwin ]]; then
     print "\nTip: in Docker Desktop, turn on Settings > General > 'Start Docker Desktop when you sign in'"
     print "so Freetar comes back after a restart."
 fi
+}
+
+main "$@"

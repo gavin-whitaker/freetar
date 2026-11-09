@@ -1,6 +1,7 @@
 # HTTPS in front of freetar, so the microphone (tuner / listen & follow) works from
 # other devices on the network. Browsers only allow mic access on https or localhost.
-# The certificate is self-signed by Caddy's local CA: accept the warning once per device.
+# The certificate is signed by Caddy's local CA. Either accept the warning once per device,
+# or install /freetar-ca.crt on the device and trust it (needed for the iPhone home-screen app).
 {
 	skip_install_trust
 	# Requests to a bare IP carry no SNI; serve the LAN IP certificate for them.
@@ -9,5 +10,16 @@
 
 https://localhost:8443, https://{$FREETAR_LAN_IP:127.0.0.1}:8443 {
 	tls internal
-	reverse_proxy freetar:22000
+
+	handle /freetar-ca.crt {
+		root * /data/caddy/pki/authorities/local
+		rewrite * /root.crt
+		header Content-Type application/x-x509-ca-cert
+		header Content-Disposition "attachment; filename=freetar-ca.crt"
+		file_server
+	}
+
+	handle {
+		reverse_proxy freetar:22000
+	}
 }

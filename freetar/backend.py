@@ -3,7 +3,7 @@ import sys
 import os
 from pathlib import Path
 import requests
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from flask_caching import Cache
 from flask_minify import Minify
 
@@ -104,6 +104,21 @@ def show_tab2(tabid: int):
 @app.route("/about")
 def show_about():
     return render_template('about.html')
+
+
+@app.route("/manifest.webmanifest")
+def manifest():
+    return send_from_directory(app.static_folder, "manifest.webmanifest",
+                               mimetype="application/manifest+json")
+
+
+# Served from the root so the service worker can control every page.
+@app.route("/sw.js")
+def service_worker():
+    response = send_from_directory(app.static_folder, "sw.js",
+                                   mimetype="text/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.errorhandler(403)

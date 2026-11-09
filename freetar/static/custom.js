@@ -445,3 +445,27 @@ const change_columns = (add) => {
 change_columns(0);
 document.querySelector("#columns_up")?.addEventListener("click", () => change_columns(1));
 document.querySelector("#columns_down")?.addEventListener("click", () => change_columns(-1));
+
+
+/*****************
+ * INSTALLED APP
+ *****************/
+
+// Home-screen apps have no browser back button, so the navbar provides one.
+const appBack = document.getElementById("app_back");
+if (appBack) {
+    if (location.pathname === "/" && !location.search) {
+        appBack.remove();
+    } else {
+        appBack.addEventListener("click", () => {
+            if (history.length > 1) history.back();
+            else location.href = "/";
+        });
+    }
+}
+
+if ("serviceWorker" in navigator && window.isSecureContext) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(err => console.warn("Service worker not registered:", err));
+    });
+}

@@ -48,6 +48,27 @@
     font-size: 0.9rem;
 }
 
+.app-only {
+    display: none;
+}
+
+html.standalone .app-only {
+    display: inline-flex;
+    align-items: center;
+}
+
+html.standalone body {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+html.standalone .tab,
+html.standalone input,
+html.standalone textarea {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 @media print {
     #chordDiagrams {
         display: grid !important;

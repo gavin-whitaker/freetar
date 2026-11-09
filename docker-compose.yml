@@ -12,7 +12,8 @@ services:
       - ALL
     read_only: true
 
-  # https://<FREETAR_LAN_IP>:8443 - needed for microphone access from phones/tablets
+  # https://<FREETAR_HOSTNAME or FREETAR_LAN_IP>:8443 - needed for microphone access from phones/tablets
+  # Run scripts/phone-url.sh to fill both in for the current network.
   caddy:
     image: caddy:2-alpine
     container_name: freetar-https
@@ -22,6 +23,7 @@ services:
       - "${FREETAR_HTTPS_PORT:-8443}:8443"
     environment:
       - FREETAR_LAN_IP=${FREETAR_LAN_IP:-127.0.0.1}
+      - FREETAR_HOSTNAME=${FREETAR_HOSTNAME:-freetar.local}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

@@ -8,7 +8,7 @@
 	default_sni {$FREETAR_LAN_IP:127.0.0.1}
 }
 
-https://localhost:8443, https://{$FREETAR_LAN_IP:127.0.0.1}:8443 {
+https://localhost:8443, https://{$FREETAR_LAN_IP:127.0.0.1}:8443, https://{$FREETAR_HOSTNAME:freetar.local}:8443 {
 	tls internal
 
 	handle /freetar-ca.crt {

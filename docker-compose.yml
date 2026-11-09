@@ -1,6 +1,6 @@
 services:
   freetar:
-    image: kmille2/freetar:latest
+    image: freetar:custom
     build: .
     container_name: freetar
     ports:

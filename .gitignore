@@ -3,3 +3,4 @@ TODOs
 *.swp
 *.sh
 .env
+!scripts/*.sh

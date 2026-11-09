@@ -1,6 +1,8 @@
 import waitress
 import sys
 import os
+import threading
+import time
 from pathlib import Path
 import requests
 from flask import Flask, render_template, request, send_from_directory
@@ -55,14 +57,24 @@ def popular_tabs():
     return get_popular()
 
 
-@app.route("/")
-def index():
+def load_popular_tabs():
     try:
-        popular = popular_tabs()
+        return popular_tabs()
     except (FreetarError, KeyError, ValueError, AttributeError, requests.exceptions.RequestException) as e:
         print(f"Could not load popular tabs: {e}")
-        popular = []
-    return render_template("index.html", popular=popular)
+        return []
+
+
+def keep_popular_tabs_warm():
+    """Fetches the popular list in the background so no visitor waits on Ultimate Guitar."""
+    while True:
+        load_popular_tabs()
+        time.sleep(60 * 60)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html", popular=load_popular_tabs())
 
 
 @app.route("/search")
@@ -134,6 +146,7 @@ def internal_error(error):
 def main():
     host = os.getenv('FREETAR_HOST', '0.0.0.0')
     port = os.getenv('FREETAR_PORT', 22000)
+    threading.Thread(target=keep_popular_tabs_warm, daemon=True).start()
     if __name__ == '__main__':
         app.run(debug=True,
                 host=host,

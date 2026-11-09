@@ -1,0 +1,13 @@
+# HTTPS in front of freetar, so the microphone (tuner / listen & follow) works from
+# other devices on the network. Browsers only allow mic access on https or localhost.
+# The certificate is self-signed by Caddy's local CA: accept the warning once per device.
+{
+	skip_install_trust
+	# Requests to a bare IP carry no SNI; serve the LAN IP certificate for them.
+	default_sni {$FREETAR_LAN_IP:127.0.0.1}
+}
+
+https://localhost:8443, https://{$FREETAR_LAN_IP:127.0.0.1}:8443 {
+	tls internal
+	reverse_proxy freetar:22000
+}

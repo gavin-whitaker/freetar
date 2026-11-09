@@ -1,0 +1,69 @@
+.chord-grid {
+    display: grid;
+    gap: 0.75rem 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+}
+
+.chord-card {
+    text-align: center;
+    break-inside: avoid;
+}
+
+.chord-card .chord-name {
+    font-weight: 600;
+}
+
+.chord-card svg {
+    width: 100%;
+    max-width: 96px;
+    height: auto;
+}
+
+.chord-grid.tab-view {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.chord-card .chord-tab {
+    display: inline-block;
+    text-align: left;
+    font-size: 0.95rem;
+    line-height: 1.25;
+    margin: 0.25rem 0 0;
+}
+
+.chord-grid:not(.tab-view) .chord-tab,
+.chord-grid.tab-view svg {
+    display: none;
+}
+
+.favorite {
+    cursor: pointer;
+}
+
+.type-filter .btn {
+    border-radius: 2rem;
+}
+
+.result-row .other-versions a {
+    font-size: 0.9rem;
+}
+
+@media print {
+    #chordDiagrams {
+        display: grid !important;
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    #chordDiagrams.tab-view {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    .tab {
+        font-size: 10pt;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+}

@@ -1,100 +1,225 @@
 {% extends "base.html" %}
 
+{% set type_info = {
+    "Chords": ("chords", "text-bg-primary"),
+    "Tabs": ("tabs", "text-bg-success"),
+    "Ukulele Chords": ("ukulele", "text-bg-warning"),
+    "Bass Tabs": ("bass", "text-bg-info"),
+} %}
+
+{% macro type_badge(_type) -%}
+  <span class="badge rounded-pill {{ type_info.get(_type, ('other', 'text-bg-secondary'))[1] }}">{{ _type }}</span>
+{%- endmacro %}
+
+{% macro stars(rating) -%}
+  {%- set full = rating | round | int -%}
+  <span class="text-warning" title="{{ rating }}/5">{{ "★" * full }}<span class="text-body-tertiary">{{ "★" * (5 - full) }}</span></span>
+{%- endmacro %}
+
+{% macro fav_star(result) -%}
+  <span role="button" title="add/remove song to/from favs" data-artist="{{result.artist_name}}" data-song="{{result.song_name}}" data-type="{{result._type}}" data-rating="{{result.rating}}" data-url="{{ result.tab_url }}" class="favorite">★</span>
+{%- endmacro %}
 
 {% block content %}
 
-<div class="table-responsive">
-  <table id="results" class="table">
-      <thead>
+{% if search_term %}
+  <div class="col-12">
+    <h5 class="mb-3">Results for "{{ search_term }}"</h5>
+  </div>
+
+  {% if search_results and search_results.results %}
+    {% set groups = search_results.grouped %}
+    <div class="col-12 type-filter d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Filter by type" data-table="#results" data-empty="#no_filter_results">
+      <button type="button" class="btn btn-sm btn-primary" data-filter="all">All <span class="count"></span></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" data-filter="chords">Chords <span class="count"></span></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" data-filter="tabs">Tabs <span class="count"></span></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" data-filter="ukulele">Ukulele <span class="count"></span></button>
+      <button type="button" class="btn btn-sm btn-outline-primary" data-filter="bass">Bass <span class="count"></span></button>
+    </div>
+
+    <div class="col-12 table-responsive">
+      <table id="results" class="table table-hover align-middle">
+        <thead>
           <tr>
-              <th scope="col" class="order">Artist</th>
-              <th scope="col" class="order">Song</th>
-              <th scope="col" class="order">Rating</th>
-              <th scope="col" class="order">Type</th>
-              <th scope="col">Favorite</th>
+            <th scope="col" class="order">Song</th>
+            <th scope="col" class="order">Artist</th>
+            <th scope="col" class="order">Type</th>
+            <th scope="col" class="order">Rating</th>
+            <th scope="col"></th>
           </tr>
-      </thead>
-      <tbody>
-          {% if search_results %}
-              {% for result in search_results.results %}
-              <tr>
-                  <td class="artist"><a href="/search?search_term={{ result.artist_name }}">{{ result.artist_name}}</a></td>
-                  <td class="song"><a href="{{ result.tab_url}}">{{ result.song_name}} (ver {{result.version}})</a></td>
-                  <td class="rating" data-value="{{ result.rating }}">{{ result.rating}}/5 ({{result.votes}})</td>
-                  <td class="type">{{ result._type}}</td>
-                  <td>
-                    <span data-artist="{{result.artist_name}}" data-song="{{result.song_name}}" data-type="{{result._type}}" data-rating="{{result.rating}}" data-url="{{ result.tab_url }}" class="favorite">★</span>
-                  </td>
-              </tr>
-              {% endfor %}
-          {% endif %}
-      </tbody>
-  </table>
-</div>
-
-<div>
-  {% if search_results %}
-        <table>
-            <tr>
-                <td>
-                {% if search_results.current_page > 1 %}
-                    &nbsp;
-                    <a href="/search?search_term={{ search_term }}&page={{ search_results.current_page - 1 }}" >⇐&nbsp;</a>
-                {% else %}
-                    &nbsp;⇐
+        </thead>
+        <tbody>
+          {% for group in groups %}
+            {% set result = group.best %}
+            <tr class="result-row" data-type="{{ type_info.get(result._type, ('other',))[0] }}">
+              <td class="song">
+                <a class="fw-semibold" href="{{ result.tab_url }}">{{ result.song_name }}</a>
+                {% if group.other_versions %}
+                  <details class="other-versions">
+                    <summary class="small text-body-secondary text-nowrap">+{{ group.other_versions | length }} more version{{ "s" if group.other_versions | length > 1 }}</summary>
+                    <ul class="list-unstyled ms-3 mb-0">
+                      {% for alt in group.other_versions %}
+                        <li>
+                          <a href="{{ alt.tab_url }}">ver {{ alt.version }}</a>
+                          <small class="text-body-secondary">{{ alt.rating }}/5 ({{ alt.votes }} votes)</small>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </details>
                 {% endif %}
-                </td>
-                {% for page in range(search_results.total_pages) %}
-                <td>
-                    <a    
-                        {% if page + 1 != search_results.current_page %}
-                            href="/search?search_term={{ search_term }}&page={{ page + 1 }}"
-                        {% endif %}
-                    >{{ page + 1 }}
-                    </a>
-                </td>
-                {% endfor %}
-                <td>
-                {% if search_results.current_page < search_results.total_pages %}
-                    <a href="/search?search_term={{ search_term }}&page={{ search_results.current_page + 1 }}" >&nbsp;⇒</a>
-                    &nbsp;
-                {% else %}
-                    &nbsp;⇒
-                {% endif %}
-                </td>
+              </td>
+              <td class="artist"><a href="{{ url_for('search', search_term=result.artist_name) }}">{{ result.artist_name }}</a></td>
+              <td class="type">{{ type_badge(result._type) }}</td>
+              <td class="rating text-nowrap" data-value="{{ result.rating }}">
+                {{ stars(result.rating) }} <small class="text-body-secondary">({{ result.votes }})</small>
+              </td>
+              <td>{{ fav_star(result) }}</td>
             </tr>
-        </table>
-  {% endif %}
-</div>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p id="no_filter_results" class="text-body-secondary" style="display: none;">No results of this type on this page.</p>
+    </div>
 
-<details><summary>Advanced</summary>
-  <strong class="d-block">Export favorites</strong>
-  <button type="button" class="btn btn-secondary" onclick="exportFavorites()">Export</button><br/>
-  <strong class="mt-3 d-block">Import favorites</strong>
-<input type="file" class="form-control" onchange="importFavorites(this)" />
-</details>
+    {% if search_results.total_pages > 1 %}
+      <nav class="col-12" aria-label="Search result pages">
+        <ul class="pagination justify-content-center">
+          {% set current = search_results.current_page %}
+          <li class="page-item {{ 'disabled' if current <= 1 }}">
+            <a class="page-link" href="{{ url_for('search', search_term=search_term, page=current - 1) }}">&laquo; Prev</a>
+          </li>
+          {% for page in search_results.page_window %}
+            {% if page is none %}
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            {% else %}
+              <li class="page-item {{ 'active' if page == current }}">
+                <a class="page-link" href="{{ url_for('search', search_term=search_term, page=page) }}">{{ page }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+          <li class="page-item {{ 'disabled' if current >= search_results.total_pages }}">
+            <a class="page-link" href="{{ url_for('search', search_term=search_term, page=current + 1) }}">Next &raquo;</a>
+          </li>
+        </ul>
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="col-12 text-center text-body-secondary py-5">
+      <p class="fs-5 mb-1">No results for "{{ search_term }}"</p>
+      <p>Try a different spelling, or search for just the song title or artist.</p>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="col-12 col-lg-5 order-lg-2 mb-4">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <strong>Guitar tuner</strong>
+        <button type="button" class="btn btn-sm btn-link ms-auto p-0" data-bs-toggle="collapse" data-bs-target="#homeTuner" aria-expanded="true" aria-controls="homeTuner" id="homeTunerToggle">Hide</button>
+      </div>
+      <div class="collapse show" id="homeTuner">
+        <div class="card-body"><div data-tuner-mount></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-7 order-lg-1">
+    <h5 class="mb-3">Your favorites</h5>
+    <div id="favorites_list" class="list-group mb-3"></div>
+    <p id="favorites_empty" class="text-body-secondary" style="display: none;">
+      No favorites yet. Search for a song and tap the ★ to save it here.
+    </p>
+
+    {% if popular %}
+      <h5 class="mt-4 mb-2">Most popular of all time</h5>
+      <div class="type-filter d-flex flex-wrap gap-2 mb-2" role="group" aria-label="Filter by type" data-table="#popular">
+        <button type="button" class="btn btn-sm btn-primary" data-filter="all">All <span class="count"></span></button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="chords">Chords <span class="count"></span></button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-filter="tabs">Tabs <span class="count"></span></button>
+      </div>
+      <div class="table-responsive">
+        <table id="popular" class="table table-hover align-middle">
+          <tbody>
+            {% for result in popular %}
+              <tr data-type="{{ type_info.get(result._type, ('other',))[0] }}">
+                <td class="text-body-secondary text-end" style="width: 2.5rem;">{{ loop.index }}</td>
+                <td class="song">
+                  <a class="fw-semibold" href="{{ result.tab_url }}">{{ result.song_name }}</a>
+                  <div class="small"><a class="text-body-secondary" href="{{ url_for('search', search_term=result.artist_name) }}">{{ result.artist_name }}</a></div>
+                </td>
+                <td>{{ type_badge(result._type) }}</td>
+                <td class="text-nowrap d-none d-sm-table-cell">{{ stars(result.rating) }}</td>
+                <td class="text-nowrap small text-body-secondary d-none d-md-table-cell">
+                  {% if result.views >= 1000000 %}{{ "%.1fM" | format(result.views / 1000000) }}{% else %}{{ "%dK" | format(result.views // 1000) }}{% endif %} views
+                </td>
+                <td>{{ fav_star(result) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+
+    <details class="mt-4"><summary>Advanced</summary>
+      <strong class="d-block">Export favorites</strong>
+      <button type="button" class="btn btn-secondary" onclick="exportFavorites()">Export</button><br/>
+      <strong class="mt-3 d-block">Import favorites</strong>
+      <input type="file" class="form-control" onchange="importFavorites(this)" />
+    </details>
+  </div>
+{% endif %}
 
 <script>
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value ?? "";
+        return div.innerHTML;
+    }
 
-    if (window.location.pathname === "/") {
-
+    const favoritesList = document.getElementById("favorites_list");
+    if (favoritesList) {
         const favorites = JSON.parse(localStorage.getItem("favorites")) || {};
-        const resultsBody = document.querySelector('#results tbody');
+        const songs = Object.values(favorites).sort((a, b) =>
+            (a.artist_name + a.song).localeCompare(b.artist_name + b.song));
 
-        Object.values(favorites).forEach(song => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${song.artist_name}</td>
-                <td class="song">
-                    <a href="${song.tab_url}">${song.song}</a>
-                </td>
-                <td>${song.rating}</td>
-                <td>${song.type}</td>
-                <td><span data-artist="${song.artist_name}" data-song="${song.song}" data-type="${song.type}" data-rating="${song.rating}" data-url="${song.tab_url}" class="favorite">★</span></td>
+        document.getElementById("favorites_empty").style.display = songs.length ? "none" : "";
+        songs.forEach(song => {
+            const item = document.createElement("div");
+            item.className = "list-group-item d-flex align-items-center gap-2";
+            item.innerHTML = `
+                <a class="fw-semibold me-1" href="${escapeHtml(song.tab_url)}">${escapeHtml(song.song)}</a>
+                <span class="text-body-secondary">${escapeHtml(song.artist_name)}</span>
+                <span class="badge rounded-pill text-bg-secondary ms-auto">${escapeHtml(song.type)}</span>
+                <span role="button" title="remove from favs" class="favorite" style="color: #ffae00"
+                      data-artist="${escapeHtml(song.artist_name)}" data-song="${escapeHtml(song.song)}"
+                      data-type="${escapeHtml(song.type)}" data-rating="${escapeHtml(song.rating)}"
+                      data-url="${escapeHtml(song.tab_url)}">★</span>
             `;
-            resultsBody.appendChild(row);
+            favoritesList.appendChild(item);
         });
     }
+
+  const homeTuner = document.getElementById("homeTuner");
+  if (homeTuner) {
+    const toggle = document.getElementById("homeTunerToggle");
+    const setLabel = (open) => {
+      toggle.textContent = open ? "Hide" : "Show";
+      toggle.setAttribute("aria-expanded", open);
+    };
+    if (localStorage.getItem("home_tuner_open") === "false") {
+      homeTuner.classList.remove("show");
+      setLabel(false);
+    }
+    homeTuner.addEventListener("shown.bs.collapse", () => {
+      localStorage.setItem("home_tuner_open", true);
+      setLabel(true);
+    });
+    homeTuner.addEventListener("hidden.bs.collapse", () => {
+      localStorage.setItem("home_tuner_open", false);
+      setLabel(false);
+      homeTuner.querySelector("[data-tuner-mount]").tuner?.stop();
+    });
+  }
 
   function exportFavorites() {
     const blob = new Blob([localStorage.getItem("favorites")], { type: "application/json" });
@@ -112,30 +237,21 @@
     if (file) {
       const reader = new FileReader();
       reader.onload = function (e) {
-        const content = e.target.result;
-        localStorage.setItem("favorites", content);
+        localStorage.setItem("favorites", e.target.result);
+        location.reload();
       };
       reader.readAsText(file);
-      location.reload();
     }
   }
 </script>
 
 <script>
-    const favoritesData = JSON.parse(localStorage.getItem("favorites")) || {};
-    const favorites_url = Object.keys(favoritesData);
-    for (const fav of document.querySelectorAll('.favorite')) {
-      if (favorites_url.includes(fav.getAttribute('data-url').split("?")[0])) {
-        fav.style.color = "#ffae00";
-      }
-    } 
-
     // Add sorting to the table
     // taken from https://stackoverflow.com/a/70024272
     function table_sort() {
-        console.log('Running table sort code')
         const styleSheet = document.createElement('style')
         styleSheet.innerHTML = `
+        th.order { cursor: pointer; user-select: none; }
         .order-inactive span {
             visibility:hidden;
         }
@@ -164,17 +280,17 @@
                 })
                 th_elem.classList.remove('order-inactive')
                 th_elem.classList.add('order-active')
+                th_elem.querySelector('span').innerHTML = asc ? '▼' : '▲'
 
-                if (!asc) {
-                    th_elem.querySelector('span').innerHTML = '▲'
-                } else {
-                    th_elem.querySelector('span').innerHTML = '▼'
+                const sortValue = row => {
+                    const cell = row.children[index]
+                    return cell.dataset.value ?? cell.querySelector('a, .badge')?.innerText ?? cell.innerText
                 }
                 const arr = Array.from(th_elem.closest("table").querySelectorAll('tbody tr'))
                 arr.sort((a, b) => {
-                    const a_val = a.dataset.value || a.children[index].innerText
-                    const b_val = b.dataset.value || b.children[index].innerText
-                    return (asc) ? a_val.localeCompare(b_val) : b_val.localeCompare(a_val)
+                    const a_val = sortValue(a), b_val = sortValue(b)
+                    const cmp = isNaN(a_val) || isNaN(b_val) ? a_val.localeCompare(b_val) : a_val - b_val
+                    return asc ? cmp : -cmp
                 })
                 arr.forEach(elem => {
                     th_elem.closest("table").querySelector("tbody").appendChild(elem)

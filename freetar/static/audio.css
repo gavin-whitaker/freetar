@@ -1,0 +1,280 @@
+/*****************
+ * TUNER
+ *****************/
+
+.tuner {
+    --tuner-good: var(--bs-success);
+    max-width: 26rem;
+    margin: 0 auto;
+}
+
+.tuner-display {
+    text-align: center;
+}
+
+.tuner-note {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.tuner-note sub {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--bs-secondary-color);
+}
+
+.tuner-gauge {
+    width: 100%;
+    max-width: 18rem;
+    display: block;
+    margin: -0.25rem auto 0;
+    overflow: visible;
+}
+
+.tuner-arc {
+    fill: none;
+    stroke: var(--bs-border-color);
+    stroke-width: 3;
+}
+
+.tuner-arc-zone {
+    fill: none;
+    stroke: var(--tuner-good);
+    stroke-width: 7;
+    stroke-linecap: round;
+}
+
+.tuner-tick {
+    stroke: var(--bs-secondary-color);
+    stroke-width: 1.5;
+}
+
+.tuner-tick-zero {
+    stroke: var(--tuner-good);
+    stroke-width: 2.5;
+}
+
+.tuner-scale {
+    font-size: 9px;
+    fill: var(--bs-secondary-color);
+}
+
+.tuner-needle {
+    transform-origin: 100px 110px;
+    transition: transform 0.12s ease-out;
+    stroke: var(--bs-body-color);
+    fill: var(--bs-body-color);
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0.35;
+}
+
+.tuner-active .tuner-needle {
+    opacity: 1;
+}
+
+.tuner-in-tune .tuner-needle,
+.tuner-in-tune .tuner-note {
+    stroke: var(--tuner-good);
+    fill: var(--tuner-good);
+    color: var(--tuner-good);
+}
+
+.tuner-in-tune .tuner-gauge {
+    filter: drop-shadow(0 0 6px rgba(var(--bs-success-rgb), 0.7));
+}
+
+.tuner-status {
+    min-height: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.tuner-in-tune .tuner-status {
+    color: var(--tuner-good) !important;
+    font-weight: 600;
+}
+
+.tuner-headstock {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.tuner-chromatic .tuner-headstock {
+    opacity: 0.45;
+}
+
+.tuner-head-shape {
+    width: 4.5rem;
+    border-radius: 1.6rem 1.6rem 0.6rem 0.6rem;
+    background: linear-gradient(180deg, var(--bs-secondary-bg), var(--bs-tertiary-bg));
+    border: 1px solid var(--bs-border-color);
+}
+
+.tuner-pegs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.tuner-peg {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 2px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    font-weight: 600;
+    transition: all 0.15s;
+}
+
+.tuner-peg:hover {
+    border-color: var(--bs-primary);
+}
+
+.tuner-peg.active {
+    background: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+}
+
+.tuner-in-tune .tuner-peg.active {
+    background: var(--tuner-good);
+    border-color: var(--tuner-good);
+}
+
+.tuner-peg.locked {
+    box-shadow: 0 0 0 3px rgba(var(--bs-warning-rgb), 0.8);
+}
+
+.audio-level {
+    height: 0.4rem;
+    border-radius: 1rem;
+    background: var(--bs-secondary-bg);
+    overflow: hidden;
+    min-width: 3rem;
+}
+
+.audio-level-bar {
+    height: 100%;
+    width: 0;
+    background: var(--bs-success);
+    transition: width 0.08s linear;
+}
+
+/*****************
+ * SCORE FOLLOWER
+ *****************/
+
+.following .follow-target {
+    cursor: pointer;
+}
+
+.follow-target {
+    border-radius: 0.3rem;
+    transition: background-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.follow-passed {
+    opacity: 0.55;
+    color: var(--bs-success);
+}
+
+.follow-current {
+    background: var(--bs-primary);
+    color: #fff !important;
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--bs-primary), 0 0 10px rgba(var(--bs-primary-rgb), 0.6);
+}
+
+.follow-next {
+    box-shadow: 0 0 0 1px var(--bs-primary);
+}
+
+.tab-line.follow-line {
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    border-radius: 0.2rem;
+}
+
+/* leave room for the listening bar */
+body.follower-open {
+    padding-bottom: 7rem;
+}
+
+.listen-hud {
+    position: fixed;
+    left: 50%;
+    bottom: 0.75rem;
+    transform: translateX(-50%);
+    width: min(60rem, calc(100% - 1.5rem));
+    z-index: 1030;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.18);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+}
+
+.listen-hud.collapsed .listen-hud-body {
+    display: none !important;
+}
+
+.listen-hud.collapsed {
+    width: auto;
+}
+
+.listen-hud .hud-readout {
+    min-width: 0;
+}
+
+.listen-hud .hud-readout b {
+    font-variant-numeric: tabular-nums;
+}
+
+.listen-hud .form-range {
+    width: 6rem;
+}
+
+.listen-hud .form-select {
+    width: auto;
+}
+
+.rec-dot {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--bs-secondary-color);
+    margin-right: 0.3rem;
+}
+
+.listening .rec-dot {
+    background: var(--bs-danger);
+    animation: rec-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes rec-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@media print {
+    .listen-hud {
+        display: none !important;
+    }
+
+    .follow-current,
+    .follow-next,
+    .follow-passed,
+    .tab-line.follow-line {
+        background: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        opacity: 1 !important;
+    }
+}

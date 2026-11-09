@@ -3,37 +3,28 @@
 
 {% block content %}
   
-  <div class="col-sm col-md-8 col-lg-9 col-12">
-      <h5>
-          <a href="/search?search_term={{ tab.artist_name }}">{{ tab.artist_name }}</a> - {{ tab.song_name }} (ver {{tab.version }})
-          <span title="add/remove song to/from favs" class="favorite m-2 d-print-none" data-artist="{{tab.artist_name}}" data-song="{{tab.song_name}}" data-type="{{tab._type}}" data-rating="{{tab.rating}}" data-url="{{ request.path }}">★</span>
-      </h5>
-  </div>
-      
-  <div class="col-sm col-md-4 col-lg-3">
-     View on <a class="d-print-none" href="{{ tab.tab_url }}?no_redirect">Ultimate Guitar</a>
+  <div class="col-12 d-flex flex-wrap align-items-baseline justify-content-between gap-2">
+      <h4 class="mb-1">
+          {{ tab.song_name }}
+          <small class="text-body-secondary">by <a href="/search?search_term={{ tab.artist_name }}">{{ tab.artist_name }}</a></small>
+          <span title="add/remove song to/from favs" class="favorite ms-1 d-print-none" role="button" data-artist="{{tab.artist_name}}" data-song="{{tab.song_name}}" data-type="{{tab._type}}" data-rating="{{tab.rating}}" data-url="{{ request.path }}">★</span>
+      </h4>
+      <a class="small d-print-none" href="{{ tab.tab_url }}?no_redirect">View on Ultimate Guitar</a>
   </div>
 
-  <div class="col-sm col-md-9 col-lg-9">
-    Difficulty: {{ tab.difficulty }}<br>
-  </div>
-
-  <div class="col-sm col-md-3 col-lg-3">
-      Capo: 
-      {% if tab.capo %}
-          {{ tab.capo -}} th fret
-      {% else %}
-          no capo
+  <div class="col-12 d-flex flex-wrap gap-2 mb-3">
+      <span class="badge rounded-pill text-bg-secondary">{{ tab._type }} &middot; ver {{ tab.version }}</span>
+      {% if tab.difficulty %}
+      <span class="badge rounded-pill bg-body-tertiary text-body border fw-normal">Difficulty: {{ tab.difficulty }}</span>
+      {% endif %}
+      <span class="badge rounded-pill bg-body-tertiary text-body border fw-normal">
+          {% if tab.capo %}Capo: {{ tab.capo }}th fret{% else %}No capo{% endif %}
+      </span>
+      {% if tab.tuning %}
+      <span class="badge rounded-pill bg-body-tertiary text-body border fw-normal">Tuning: {{ tab.tuning }}</span>
       {% endif %}
   </div>
-  
-  <div class="col-sm col-lg-12">
-     {% if tab.tuning %}
-         Tuning: {{ tab.tuning }}<br>
-     {% endif %}
-  </div>
-    
-    
+
   <div class="d-flex align-items-center d-print-none flex-wrap">
       <div class="form-check form-switch autoscroll me-4">
           <input class="form-check-input" type="checkbox" role="switch" id="checkbox_autoscroll" />
@@ -43,11 +34,6 @@
           <span role="button" id="scroll_speed_up" title="increase scroll speed" class="me-2" >❯❯</span>
       </div>
       
-      <div class="form-check form-switch me-4">
-          <input class="form-check-input" type="checkbox" role="switch" id="checkbox_view_chords"/>
-          <label class="form-check-label" for="checkbox_view_chords">Show chords</label>
-      </div>
-   
       <div>
           <span class="">Transpose </span>
           <span role="button" id="transpose_down" title="transpose down" class="m-2">↓</span>
@@ -59,47 +45,77 @@
           <span role="button" id="columns_up" title="add column" class="m-2">+</span>
           <span role="button" id="columns_down" title="remove column" class="m-2">-</span>
       </div>
+      <div class="d-flex gap-2 ms-lg-auto">
+          {% if tab.is_guitar %}
+          <button type="button" id="listen_toggle" class="btn btn-sm btn-primary" title="Follow along as you play, using the microphone">
+              <span class="rec-dot"></span>Listen &amp; follow
+          </button>
+          {% endif %}
+          <button type="button" id="download_pdf" class="btn btn-sm btn-outline-primary" title="Opens the print dialog - choose 'Save as PDF'">
+              Download PDF
+          </button>
+      </div>
   </div>
 
     <hr class="border border-primary"/>
-    <div id="chordVisuals" style="display: none;">
-        <div class="d-grid" style="grid-gap: 3rem; grid-template-columns: repeat(auto-fill, minmax(min(100px, 100%), 1fr));">
-            {% for chord in tab.chords %}
-                {% set i = 0 %}
-                {% set chord_map = tab.chords[chord][i] %}
-                <div class="text-center">
-                    <div>{{chord}}</div>
-                    <table class="table table-borderless table-sm p-2 bg-light rounded text-black">
-                        <thead>
-                            <tr>
-                                <th></th>
-                                {% for x in tab.fingers_for_strings[chord][i] %}
-                                    <th>{{x if x != 0}}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody class="border-3 border-start-0 border-end-0 border-bottom-0 border-black">
-                            {% for fret in chord_map%}
-                                <tr style="font-size: 0.75rem;">
-                                    <td class="m-0 p-0">{{fret}}</td>
-                                    {% for string in chord_map[fret] %}
-                                        <td class="m-0 p-0 border-bottom border-black" style="background: linear-gradient(#000, #000) no-repeat center/1px 100%;">
-                                            <div class="text-align-center text-center m-0 p-0 {{'bg-black rounded-circle' if string==1}}" style="height: 1rem; width: 1rem;"></div>
-                                        </td>
-                                    {%endfor%}
-                                </tr>
-                            {%endfor%}
-                        </tbody>
-                    </table>
-                </div>
-            {% endfor %}
+    {% if tab.is_guitar and tab.chord_shapes %}
+    <section id="chordSection" class="mb-2">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <h6 class="mb-0">Chords used in this song ({{ tab.chord_shapes | length }})</h6>
+            <small id="chords_original_key" class="text-body-secondary" style="display: none;">(shown in original key)</small>
+            <div class="btn-group btn-group-sm ms-auto d-print-none" role="group" aria-label="Chord view">
+                <button type="button" class="btn btn-outline-secondary" data-chord-view="diagram">Diagram</button>
+                <button type="button" class="btn btn-outline-secondary" data-chord-view="tab">Tab</button>
+            </div>
+            <button type="button" id="toggle_chords" class="btn btn-sm btn-link d-print-none" aria-expanded="true" aria-controls="chordDiagrams">Hide</button>
         </div>
+        <div id="chordDiagrams" class="chord-grid" data-shapes='{{ tab.chord_shapes | tojson }}'></div>
         <hr class="border border-primary"/>
+    </section>
+    {% endif %}
+
+    <div class="tab font-monospace" data-capo="{{ tab.capo_fret }}" data-guitar="{{ 1 if tab.is_guitar else 0 }}">
+        {{ tab.tab | safe }}
     </div>
 
-    <div class="tab font-monospace">
-        {{ tab.tab | safe }} 
+    {% if tab.is_guitar %}
+    <div id="listenHud" class="listen-hud d-print-none" style="display: none;" role="region" aria-label="Listen and follow">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button type="button" id="hud_listen" class="btn btn-sm btn-outline-danger">
+                <span class="rec-dot"></span><span class="label">Listen</span>
+            </button>
+            <div class="audio-level" style="width: 4rem;" title="Input level"><div class="audio-level-bar"></div></div>
+            <div class="hud-readout flex-grow-1 text-truncate">
+                Hearing: <b id="hud_hearing">&ndash;</b>
+                <span class="text-body-secondary mx-1">&rarr;</span>
+                Next: <b id="hud_next">&ndash;</b>
+                <small id="hud_position" class="text-body-secondary ms-1"></small>
+            </div>
+            <button type="button" id="hud_collapse" class="btn btn-sm btn-link px-1" title="Collapse/expand">&#x2195;</button>
+            <button type="button" id="hud_close" class="btn-close" aria-label="Close"></button>
+        </div>
+        <div class="listen-hud-body d-flex align-items-center gap-3 flex-wrap mt-2">
+            <label class="d-flex align-items-center gap-1 mb-0">
+                <span class="text-body-secondary">Sensitivity</span>
+                <input type="range" id="hud_sensitivity" class="form-range" min="1" max="100" value="55">
+            </label>
+            <label class="d-flex align-items-center gap-1 mb-0">
+                <span class="text-body-secondary">Capo</span>
+                <select id="hud_capo" class="form-select form-select-sm">
+                    {% for fret in range(13) %}<option value="{{ fret }}">{{ fret }}</option>{% endfor %}
+                </select>
+            </label>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Move the cursor">
+                <button type="button" id="hud_prev" class="btn btn-outline-secondary" title="Previous">&#x25C0; Prev</button>
+                <button type="button" id="hud_next_btn" class="btn btn-outline-secondary" title="Next">Next &#x25B6;</button>
+                <button type="button" id="hud_reset" class="btn btn-outline-secondary" title="Back to the top">&#x21E4; Top</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#tunerModal">Tuner</button>
+            <small class="text-body-secondary">Tip: click any chord or tab note to jump there.</small>
+        </div>
+        <div id="hud_error" class="alert alert-warning small mt-2 mb-0" style="display: none;"></div>
     </div>
+    {% endif %}
 
     {% if tab.alternatives %}
     <div class="d-print-none mt-4">
@@ -156,4 +172,10 @@
 
 </script>
 
+{% endblock %}
+
+{% block scripts %}
+{% if tab.is_guitar %}
+<script type="module" src="/static/tab-follower.js"></script>
+{% endif %}
 {% endblock %}

@@ -11,3 +11,23 @@ services:
     cap_drop:
       - ALL
     read_only: true
+
+  # https://<FREETAR_LAN_IP>:8443 - needed for microphone access from phones/tablets
+  caddy:
+    image: caddy:2-alpine
+    container_name: freetar-https
+    depends_on:
+      - freetar
+    ports:
+      - "${FREETAR_HTTPS_PORT:-8443}:8443"
+    environment:
+      - FREETAR_LAN_IP=${FREETAR_LAN_IP:-127.0.0.1}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

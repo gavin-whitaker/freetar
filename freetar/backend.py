@@ -2,11 +2,12 @@ import waitress
 import sys
 import os
 from pathlib import Path
+import requests
 from flask import Flask, render_template, request
 from flask_caching import Cache
 from flask_minify import Minify
 
-from freetar.ug import Search, ug_tab
+from freetar.ug import Search, ug_tab, get_popular
 from freetar.utils import get_version, FreetarError
 
 FREETAR_CACHING = os.environ.get("FREETAR_CACHING", "ram")
@@ -49,9 +50,19 @@ def export_variables():
     }
 
 
+@cache.memoize(timeout=60 * 60 * 24)
+def popular_tabs():
+    return get_popular()
+
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    try:
+        popular = popular_tabs()
+    except (FreetarError, KeyError, ValueError, AttributeError, requests.exceptions.RequestException) as e:
+        print(f"Could not load popular tabs: {e}")
+        popular = []
+    return render_template("index.html", popular=popular)
 
 
 @app.route("/search")
